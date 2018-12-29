@@ -1,31 +1,35 @@
 #!/usr/bin/env python2
-
 """
+    hog.py
+    
     Histogram of Oriented Gradients 
     in Python numpy
-    for educational purpose only
-    credit to : Dalal & Triggs
+    (for educational purpose only)
+    credit to : Dalal & Triggs 
 
 """
+#Author @otivedani 
+
 
 import numpy as np
 from ..improc import filters
 from ..powerup import indextra
 
-useSignedGradients = False
-
-#unknownvariable
-derivAperture = 1
-winSigma = -1.
-histogramNormType = 0
-L2HysThreshold = 0.2
-gammaCorrection = 1
-nlevels = 64
+#TODO adapting those parameter from opencv2
+# useSignedGradients = False
+# #unknownvariable
+# derivAperture = 1
+# winSigma = -1.
+# histogramNormType = 0
+# L2HysThreshold = 0.2
+# gammaCorrection = 1
+# nlevels = 64
 
 
 def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1), nbins=9, useSigned=False, useInterpolation=False, normalizeType='L2.old'):
     """
-    params :
+    Parameters : 
+	------------
         image2d - [n=2]darray, one channel image
         cell_size - (int, int), size in pixel-per-cell
         block_size - (int, int), size in cell-per-block 
@@ -36,6 +40,11 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1), nbins=9,
         useInterpolation - using linear-bilinear interpolation is True, not using is False (default)
                         
         ...(tba)
+    
+    Return :
+    --------
+    normalized block vector, flattened
+
     """
 
     # Section 0. Precompute variables
@@ -118,11 +127,15 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1), nbins=9,
 
 def linterp(ang, nbins, signed=False):
     """
-    args:
+    Parameters : 
+	------------
         ang: numpy 2darray - orientation coordinate
         nbins: integer - divisor of angle
-        signed: if true - change to range(0,360)
-    return:
+        signed: bool - orientation range 
+                        (0,360) if True, 
+                        (0,180) if False (default)
+    Return :
+    --------
         tuples of numpy 2darray magnitude and angle
         [c  ,               (1-c)],
         [x_2,                 x_1]
@@ -142,7 +155,21 @@ def linterp(ang, nbins, signed=False):
     
 def blinterp(mag, cellSize):
     #FLAG
-    
+    """
+    Parameters : 
+	------------
+        mag: numpy 2darray - magnitude weights
+        cellSize: (int,int) - cell size to determine ranges
+        
+    Return :
+    --------
+        magnitudes in their respective bilinear position
+        
+        (mag_00,mag_01,mag_10,mag_11)
+
+        where :
+        mag = mag_00 + mag_01 + mag_10 + mag_11
+    """
     xi = np.tile(np.arange(mag.shape[-1]), (mag.shape[-2],1))
     yj = np.tile(np.arange(mag.shape[-2]), (mag.shape[-1],1)).T
 

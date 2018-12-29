@@ -1,19 +1,17 @@
+#!/usr/bin/env python2
 """
-
-various image operation
-
--------------------------------------------------------------------------------
+filters.py - various image filtering operation
 
 """
-#Author @itoniaxi
+#Author @otivedani 
 
 import numpy as np
 
-# Section 1: numpy-based 2D convolutional filter
-
+# ::
 def sobelX_HC(img):
     """
-    args:
+    Parameters : 
+	------------
         img: numpy 2darray
     """
     img2 = np.pad(img,((1,1),(1,1)),'constant', constant_values=((0, 0),(255, 0)))
@@ -24,7 +22,8 @@ def sobelX_HC(img):
 
 def sobelY_HC(img):
     """
-    args:
+    Parameters : 
+	------------
         img: numpy 2darray
     """
     img2 = np.pad(img,((1,1),(1,1)),'constant', constant_values=((0, 255),(0, 0)))
@@ -36,14 +35,22 @@ def sobelY_HC(img):
     # print len(result_v)
     return np.clip(result_v,0,255)
 
-# ::
+# Section 1: numpy-based 2D convolutional filter, improved version from sobelY_HC and sobelX_HC
 def conv_filter(img, h_kernel, v_kernel, clip=False):
     """
-    args:
+    Convolve 2d array horizontally then vertically.
+    
+    Parameters : 
+	------------
         img: numpy 2darray
         h_kernel: 1darray
         v_kernel: 1darray
         clip: if true - normalize to range(0,255)
+
+    Return :
+    --------
+    img · (h·v)
+    
     """
     h_klen = len(h_kernel)
     v_klen = len(v_kernel)
@@ -77,11 +84,15 @@ def conv_filter(img, h_kernel, v_kernel, clip=False):
 # Section 2 : Magnitude, Angle vector calculation
 def toPolar(gX, gY, signed=False, dtype='float'):
     """
-    args:
+    Parameters : 
+	------------
         gX: numpy 2darray - cartesian coordinate
         gY: numpy 2darray - cartesian coordinate
         signed: if true - change to range(0,360) == similar to 'cv2'
                 if false - change to range(0,180)(default)
+    Return :
+    --------
+    polar coordinate (ω,θ)
     """
 
     _basis = 360 if signed else 180
@@ -95,14 +106,19 @@ def toPolar(gX, gY, signed=False, dtype='float'):
     return mag.astype(dtype), ang.astype(dtype)
 #-- end of Section 2
 
-# Section 2.1 : Magnitude, Angle vector calculation
+# Section 3 : x-position, y-position vector calculation
 def toCart(ang, mag, signed=False, dtype='float'):
     """
-    args:
+    Parameters : 
+	------------
         ang: array-like numpy, in degrees
         mag: array-like numpy
         signed: if true - change to range(0,360)
                 if false - change to range(0,180)
+
+    Return :
+    --------
+    cartesian coordinate (x,y)
     """
 
     _basis = 360 if signed else 180
@@ -111,7 +127,8 @@ def toCart(ang, mag, signed=False, dtype='float'):
     y = mag * np.sin(ang*np.pi/_basis)
 
     return x.astype(dtype), y.astype(dtype)
-#-- end of Section 2.1
-
-# Section 3 :
 #-- end of Section 3
+
+# Section 4 :
+# TBA
+#-- end of Section 4
