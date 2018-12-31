@@ -49,7 +49,7 @@ def conv_filter(img, h_kernel, v_kernel, clip=False):
 
     Return :
     --------
-    img · (h·v)
+    img (dot) (h(dot)v)
     
     """
     h_klen = len(h_kernel)
@@ -92,7 +92,7 @@ def toPolar(gX, gY, signed=False, dtype='float'):
                 if false - change to range(0,180)(default)
     Return :
     --------
-    polar coordinate (ω,θ)
+    polar coordinate (w,a)
     """
 
     _basis = 360 if signed else 180
