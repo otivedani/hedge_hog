@@ -26,7 +26,7 @@ from ..powerup import indextra
 # nlevels = 64
 
 
-def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1), nbins=9, useSigned=False, useInterpolation=False, normalizeType='L2.old'):
+def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1), nbins=9, useSigned=False, useInterpolation=False, normalizeType='L2.old', ravel=True):
     """
     Parameters : 
 	------------
@@ -121,9 +121,11 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1), nbins=9,
         divisor = np.abs(np.sum(blockhists.copy(), axis=2)+(1e-7))[:,:,None]
         blockhists /= np.where(divisor!=0, divisor, 1)
         blockhists = np.sqrt(blockhists)
-
-    return blockhists.ravel()
-    
+        
+    if ravel:
+        return blockhists.ravel()
+    else:
+        return blockhists
 
 def linterp(ang, nbins, signed=False):
     """

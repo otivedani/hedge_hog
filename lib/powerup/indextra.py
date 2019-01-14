@@ -102,7 +102,7 @@ def convolver(image, cell_size, stride_size=None):
                 shape=(strideshape[0], strideshape[1], cell_size[0], cell_size[1]), \
                 strides=(imgblksrow_stride,blkrow_stride,imgblkscol_stride,blkcol_stride) \
                 )
-
+    # print imgblocks.strides
     return imgblocks
 
 def rowcolidx(row, col):

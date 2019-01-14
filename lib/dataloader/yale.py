@@ -2,28 +2,27 @@
 from pathlib import Path
 import re
 
-def yale_load(rootdir, selimdir, ispgm):
+def yale_image_load(thedir, dotpgm):
     """
     args : 
         rootdir : root dir of yale/
         selimdir : selected image dir 
             faces/ | yalefaces/ | etc.
-        ispgm : load the .PGM file instead
+        dotpgm : load the .PGM file
     """
-    rootPath = Path(rootdir)
-    selim_Path = rootPath/selimdir
+    dirPath = Path(thedir)
     patternstr = r"subject(\d{2})\.(\w+)"
 
-    rgxpattern = re.compile(patternstr+"(\.pgm)" if ispgm else patternstr+"$")
+    rgxpattern = re.compile(patternstr+"(\.pgm)" if dotpgm else patternstr+"$")
 
     yaleresult = []
 
-    for _file in selim_Path.iterdir():
+    for _file in dirPath.iterdir():
         _result = rgxpattern.match(_file.name)
         if (_file.is_file() and _result):
             yaleresult.append({
             'imagepath':  _file,
-            'subjectnumber': int(_result.group(1)),
+            'subject_id': int(_result.group(1)),
             'data': _result.group(2)
             })
 

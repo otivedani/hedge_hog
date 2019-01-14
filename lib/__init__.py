@@ -1,4 +1,4 @@
 #!/usr/bin/env python2
 
-from powerup import *
+# from powerup import *
 
