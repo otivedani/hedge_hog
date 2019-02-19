@@ -52,10 +52,10 @@ def cellsidx(flatidx, pixels_per_cell, cells_per_block=None):
     if(cells_per_block==None):
         cells_per_block = pixels_per_cell
     cell = flatidx[:pixels_per_cell[0],:pixels_per_cell[1]]
-    # print cell.shape
-    # # print "==============="
-    # print np.add.outer(np.arange(0, image.shape[1], cell.shape[1]),cell)
-    # # print "==============="
+    # print(cell.shape)
+    # # print("===============")
+    # print(np.add.outer(np.arange(0, image.shape[1], cell.shape[1]),cell))
+    # # print("===============")
     # return np.add.outer(np.arange(0, image.ravel().shape[0], cell.shape[1]*image.shape[1]).T,\
     #     np.add.outer(np.arange(0, image.shape[1], cell.shape[1]),cell))
     cellblockpair = np.array([pixels_per_cell, cells_per_block])
@@ -96,13 +96,13 @@ def convolver(image, cell_size, stride_size=None):
 
     #sanitycheck
     # if(imgcellsrow_stride*imgcells_row/image.itemsize == image.shape[0]*image.shape[1]):
-    #     print "pass"
+    #     print("pass")
 
     imgblocks = np.lib.stride_tricks.as_strided(image, \
                 shape=(strideshape[0], strideshape[1], cell_size[0], cell_size[1]), \
                 strides=(imgblksrow_stride,blkrow_stride,imgblkscol_stride,blkcol_stride) \
                 )
-    # print imgblocks.strides
+    # print(imgblocks.strides)
     return imgblocks
 
 def rowcolidx(row, col):

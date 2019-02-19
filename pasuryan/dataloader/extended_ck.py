@@ -60,15 +60,15 @@ def extended_ck_load(xck_dir, side_dish='image'):
                                 rawdata = ''
                             subject_id = int(_rgxkid.search(_key.name).group(1))
                             ckdatas.append({'imagepath':imagepath,'subject_id':subject_id,'rawdata':rawdata})
-                            # print({'imagepath':imagepath,'rawdata':rawdata})
+                            # print(({'imagepath':imagepath,'rawdata':rawdata}))
     
     return ckdatas
 
 # res = extended_ck_load('./dataset/ck+/extended-cohn-kanade-images', 'image')
 # # extended_ck_load('./dataset/ck+/extended-cohn-kanade-images', 'emotion')
 # # res = extended_ck_load('./dataset/ck+/extended-cohn-kanade-images', 'facs')
-# print len(res)
+# print(len(res))
 # for i in range(9):
-#     print(res[i])
+#     print((res[i]))
 
 

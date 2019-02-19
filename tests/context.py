@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 # print sys.path
 
-# from lib.powerup import indextra
+# from pasuryan.powerup import indextra
 # print(indextra)
 # import skimage.filters
-# from .lib import *
+# from .pasuryan import *

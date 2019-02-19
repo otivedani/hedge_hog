@@ -60,7 +60,7 @@ def splitter_random(id_array, num_subjects, split_ratio):
     # get indexes
     nparr_idx = np.arange(id_nparr.size)
     # subjects arange
-    id_subjs = np.arange(num_subjects)
+    id_subjs = np.arange(num_subjects)+1
 
     # pointing subjects in dataset
     _ptselector = id_nparr[None,:]==id_subjs[:,None]
@@ -73,8 +73,7 @@ def splitter_random(id_array, num_subjects, split_ratio):
         selected_test_idx.append(np.random.choice(seld_idx,int(seld_idx.size*split_ratio),replace=False))
         
     te_nparr_idx = np.array([var for sublist in selected_test_idx for var in sublist])
-    # print np.delete(nparr_idx, te_nparr_idx)
-
+    # print(np.delete(nparr_idx, te_nparr_idx))
     # id_npidxs_test = nparr_idx[te_nparr_idx]
     id_npidxs_test = te_nparr_idx.ravel()
     id_npidxs_train = np.delete(nparr_idx, te_nparr_idx.ravel())
@@ -95,15 +94,15 @@ def splitter_random(id_array, num_subjects, split_ratio):
 
 # dummy_id_test, dummy_id_train = splitter(dummy_id, num_subjects, split_ratio)
 
-# print "\n"
-# print dummy_id_test
-# print dummy_id_train
-# print len(dummy_id_test)
-# print len(dummy_id_train)
-# print len(dummy_id_train)+len(dummy_id_test) == len(dummy_id)
+# print("\n")
+# print(dummy_id_test)
+# print(dummy_id_train)
+# print(len(dummy_id_test))
+# print(len(dummy_id_train))
+# print(len(dummy_id_train)+len(dummy_id_test) == len(dummy_id))
 
 # dummy_id_test, dummy_id_train = splitter_random(dummy_id, num_subjects, split_ratio)
-# print np.all(np.sort(np.append(dummy_id_train, dummy_id_test)) == np.arange(dummy_id.size))
+# print(np.all(np.sort(np.append(dummy_id_train, dummy_id_test)) == np.arange(dummy_id.size)))
 # #%%
 
 

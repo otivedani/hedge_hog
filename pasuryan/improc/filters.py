@@ -27,12 +27,12 @@ def sobelY_HC(img):
         img: numpy 2darray
     """
     img2 = np.pad(img,((1,1),(1,1)),'constant', constant_values=((0, 255),(0, 0)))
-    # print img2
+    # print(img2)
     result_h = img2[:,2:] + img2[:,1:-1] + img2[:,:-2]
-    # print result_h
+    # print(result_h)
     result_v = result_h[2:] - result_h[:-2]
-    # print result_v
-    # print len(result_v)
+    # print(result_v)
+    # print(len(result_v))
     return np.clip(result_v,0,255)
 
 # Section 1: numpy-based 2D convolutional filter, improved version from sobelY_HC and sobelX_HC
@@ -55,9 +55,9 @@ def conv_filter(img, h_kernel, v_kernel, clip=False):
     h_klen = len(h_kernel)
     v_klen = len(v_kernel)
 
-    h_pad = (h_klen-1)/2
-    v_pad = (v_klen-1)/2
-
+    h_pad = (h_klen-1)//2
+    v_pad = (v_klen-1)//2
+    
     result_h = np.zeros((img.shape[0]+(2*h_pad)+2,img.shape[1]))
     result_v = np.zeros(img.shape)
 

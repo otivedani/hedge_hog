@@ -58,7 +58,7 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1), nbins=9,
         
     _dum = np.arange(h_incell*w_incell).reshape(h_incell,w_incell).repeat(cell_size[0], axis=1).repeat(cell_size[1], axis=0)
     _place_in_bin = np.pad(_dum, (cell_size[0]//2,cell_size[1]//2), 'reflect')
-    # print np.all(_place_to_bin[4:-4,4:-4]==_dum) #must be True
+    # print(np.all(_place_to_bin[4:-4,4:-4]==_dum) #must be True)
     
     # Section 1. gradient image x and y
     gX = filters.conv_filter(image2d,[1,0,-1],[0,1,0])
@@ -83,7 +83,7 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1), nbins=9,
         magx = blinterp(magcoef*mag[None,:,:],cell_size)
         binx = ang2x[:,None,:,:]+(_pibx*nbins)[None,:,:,:]
 
-        # print mag2x.shape, ang2x.shape, bin2x.shape, newbin2x.shape, (lemper1*_hog_param_visd['orientations']).shape
+        # print(mag2x.shape, ang2x.shape, bin2x.shape, newbin2x.shape, (lemper1*_hog_param_visd['orientations']).shape)
 
     else:
         _bin_step = (degreebase/(nbins-1))
@@ -188,9 +188,9 @@ def blinterp(mag, cellSize):
     #
     # mag[0,0,0] = 0.1234
     # mag[1,0,0] = 5.6789
-    # print _blin_coefs.shape, mag.shape
-#     print np.all(np.sum(_blin_coefs, axis=(0))==1)
-#     print np.amax(_blin_coefs), np.amin(_blin_coefs), _blin_coefs.dtype
+    # print(_blin_coefs.shape, mag.shape)
+#     print(np.all(np.sum(_blin_coefs, axis=(0))==1))
+#     print(np.amax(_blin_coefs), np.amin(_blin_coefs), _blin_coefs.dtype)
     
     """
     mag.shape = (..., height, width)

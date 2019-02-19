@@ -31,10 +31,10 @@ _HOGparam = {
 
 def init_hogparam(HOGparamdict):
     global _HOGparam
-    # print(cv2paramdict.iterkeys())
+    # print((cv2paramdict.iterkeys()))
     for key in HOGparamdict.keys():
         _HOGparam[key] = HOGparamdict[key]
-    # print cv2param
+    # print(cv2param)
     return
 
 def get_cv_hogparam(path_to_file):
@@ -66,7 +66,7 @@ def get_cv_hogparam(path_to_file):
         headstr = ""
         for pstr in rawstr:
             if not rxco.match(pstr):
-                # print pstr
+                # print(pstr)
                headstr += pstr 
 
         yamlstr = yaml.dump(cv2param)
@@ -77,9 +77,9 @@ def get_cv_hogparam(path_to_file):
         outfile.truncate()
         outfile.write(newstr)
         # try:
-        #     print yaml.load(outfile)
+        #     print(yaml.load(outfile))
         # except yaml.YAMLError as exc:
-        #     print(exc)
+        #     print((exc))
     return
     
 

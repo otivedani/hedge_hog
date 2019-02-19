@@ -32,5 +32,5 @@ def yale_image_load(thedir, dotpgm):
 # selimdir = "faces"
 # ispgm = True
 # res = yale_load(rootdir, selimdir, ispgm)
-# print res[0]
-# print len(res)
+# print(res[0])
+# print(len(res))

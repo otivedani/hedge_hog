@@ -26,7 +26,7 @@ def timemeter(function, *args, **kwargs):
         for k in kwargs:
             string += "("+ k + "=" + str(_kwargs[k]) +")"
 
-    print string
+    print(string)
 
     return result
 
