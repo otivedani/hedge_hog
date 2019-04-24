@@ -15,17 +15,6 @@ import numpy as np
 from ..improc import filters
 from ..powerup import indextra
 
-#TODO adapting those parameter from opencv2
-# useSignedGradients = False
-# #unknownvariable
-# derivAperture = 1
-# winSigma = -1.
-# histogramNormType = 0
-# L2HysThreshold = 0.2
-# gammaCorrection = 1
-# nlevels = 64
-
-
 def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1), nbins=9, useSigned=False, useInterpolation=False, normalizeType='L2.old', ravel=True):
     """
     Parameters : 
@@ -112,6 +101,13 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1), nbins=9,
     elif normalizeType=='L2':
         divisor = np.sqrt(np.sum(blockhists.copy()**2, axis=2)+(1e-7)**2)[:,:,None]
         blockhists /= np.where(divisor!=0, divisor, 1)
+    #L2-hys
+    elif normalizeType=='L2-hys':
+        divisor = np.sqrt(np.sum(blockhists.copy()**2, axis=2)+(1e-7)**2)[:,:,None]
+        blockhists /= np.where(divisor!=0, divisor, 1)
+        blockhists[np.where(blockhists>0.2)] = 0.2
+        bmax, bmin = np.amax(blockhists, axis=-1), np.amin(blockhists, axis=-1)
+        blockhists = (blockhists - bmin[:,:,None])/np.where(bmax==bmin, 1, (bmax - bmin))[:,:,None]
     #L1-norm
     elif normalizeType=='L1':
         divisor = np.abs(np.sum(blockhists.copy(), axis=2)+(1e-7))[:,:,None]
