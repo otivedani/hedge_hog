@@ -5,6 +5,14 @@ import yaml
 import re
 import os, shutil
 
+class Items(list):
+    pass
+
+def items_representer(dumper, data):
+    return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
+
+yaml.representer.SafeRepresenter.add_representer(Items, items_representer)
+
 #defaults
 _HOGparam = {
     #universal params
@@ -29,7 +37,7 @@ _HOGparam = {
 
 }
 
-def init_hogparam(HOGparamdict):
+def init_hogparam(HOGparamdict={}):
     global _HOGparam
     # print((cv2paramdict.iterkeys()))
     for key in HOGparamdict.keys():
@@ -37,7 +45,7 @@ def init_hogparam(HOGparamdict):
     # print(cv2param)
     return
 
-def get_cv_hogparam(path_to_file):
+def get_cv_hogparam(path_to_file='cv2HOG_param.yml'):
     global _HOGparam
 
     cv2hog = cv2.HOGDescriptor()
@@ -45,10 +53,10 @@ def get_cv_hogparam(path_to_file):
     shutil.copyfile(path_to_file,path_to_file+".old")
         
     cv2param = {
-        'winSize' : [int(w) for w in iter(_HOGparam['wsz'])],
-        'cellSize' : [int(c) for c in reversed(_HOGparam['ppc'])],
-        'blockSize' : [int(c*b) for c,b in zip(_HOGparam['ppc'],_HOGparam['cpb'])],
-        'blockStride' : [int(c*b) for c,b in zip(_HOGparam['ppc'],_HOGparam['bstride'])],
+        'winSize' : Items([int(w) for w in iter(_HOGparam['wsz'])]),
+        'cellSize' : Items([int(c) for c in reversed(_HOGparam['ppc'])]),
+        'blockSize' : Items([int(c*b) for c,b in zip(_HOGparam['ppc'],_HOGparam['cpb'])]),
+        'blockStride' : Items([int(c*b) for c,b in zip(_HOGparam['ppc'],_HOGparam['bstride'])]),
         'nbins' : _HOGparam['nbins'],        
         'signedGradient' : 0 if _HOGparam['signed'] else 1,
         'derivAperture' : _HOGparam['derivAperture'],
@@ -58,7 +66,7 @@ def get_cv_hogparam(path_to_file):
         'gammaCorrection' : _HOGparam['gammaCorrection'],
         'nlevels' : _HOGparam['nlevels'],
     }
-    
+
     with open(path_to_file+".old",'r') as infile:
         rxco = re.compile(r"^\s+(.*)\n")
         rxtab = re.compile(r"(.*)")
@@ -69,7 +77,7 @@ def get_cv_hogparam(path_to_file):
                 # print(pstr)
                headstr += pstr 
 
-        yamlstr = yaml.dump(cv2param)
+        yamlstr = yaml.safe_dump(cv2param)
         newstr = headstr + rxtab.sub(r"   \1",yamlstr)
         
     with open(path_to_file,'w') as outfile:
