@@ -46,9 +46,7 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1),
     image2d = image2d[:h,:w]
     degreebase = 180 if not useSigned else 360
         
-    _dum = np.arange(h_incell*w_incell).reshape(h_incell, w_incell).repeat(csize_x, axis=1).repeat(csize_y, axis=0)
-    _place_in_bin = np.pad(_dum, ((csize_y//2, csize_y//2),(csize_x//2, csize_x//2)), 'edge')
-    # print(np.all(_place_to_bin[4:-4,4:-4]==_dum) #must be True)
+    _cell_mapper = np.arange(h_incell*w_incell).reshape(h_incell, w_incell).repeat(csize_x, axis=1).repeat(csize_y, axis=0)
     
     # Section 1. gradient image x and y
     gX = filters.conv_filter(image2d,[1,0,-1],[0,1,0])
@@ -62,21 +60,24 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1),
         
         magcoef, angcoef = linterp(ang, nbins, useSigned)
         ang2x = ((nbins-1)*angcoef/degreebase).astype('int')
+
+        _cell_mapper_xtra = np.pad(_cell_mapper, ((csize_y//2, csize_y//2),(csize_x//2, csize_x//2)), 'edge')
+        # print(np.all(_place_to_bin[4:-4,4:-4]==_cell_mapper) #must be True)
         
         _pibx = np.array((
-            _place_in_bin[:h,:w], \
-            _place_in_bin[:h,-w:], \
-            _place_in_bin[-h:,:w], \
-            _place_in_bin[-h:,-w:]))
+            _cell_mapper_xtra[:h,:w], \
+            _cell_mapper_xtra[:h,-w:], \
+            _cell_mapper_xtra[-h:,:w], \
+            _cell_mapper_xtra[-h:,-w:]))
 
         # # !!!important, if you dont want data loss (Python 2.x) -> mag2x = mag2x.astype(long)
         magx = blinterp(magcoef*mag[None,:,:],cell_size)
-        binx = ang2x[:,None,:,:]+(_pibx*nbins)[None,:,:,:]
+        binx = ang2x[:,None,:,:]+(_pibx[None,:,:,:]*nbins)
 
     else:
         _bin_step = (degreebase/(nbins-1))
         angx = ((ang+_bin_step/2)//_bin_step).astype('int')
-        _pibx = _place_in_bin[cell_size[0]//2:-cell_size[0]//2,cell_size[1]//2:-cell_size[1]//2]
+        _pibx = _cell_mapper
         binx = angx[None, :,:]+(_pibx[None, :,:]*nbins)
         magx = mag[None, :, :]
                 
