@@ -1,53 +1,62 @@
-#!/usr/bin/env python2
 """
     hog.py
     
     Histogram of Oriented Gradients 
     in Python numpy
     (for educational purpose only)
-    credit to : Dalal & Triggs 
+    credit to : Dalal & Triggs (2005)
 
 """
 #Author @otivedani 
-
 
 import numpy as np
 from ..improc import filters
 from ..powerup import indextra
 
 def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1), 
-    nbins=9, useSigned=False, useInterpolation=False, normalizeType='L2.old', ravel=True):
+    nbins=9, useSigned=False, useInterpolation=False, normalizeType='L2', ravel=True):
     """
     Parameters : 
 	------------
-        image2d - [n=2]darray, one channel image
-        cell_size - (int, int), size in pixel-per-cell
-        block_size - (int, int), size in cell-per-block 
-        block_stride - (int, int), amount to stride per-block
-        nbins - int, size of bin
-        useSigned - 0-360 is True 
-                    0-180 is False (default)
-        useInterpolation - using linear-bilinear interpolation is True, not using is False (default)
-                        
-        ...(tba)
-    
+        image2d             : 2darray
+                            one channel image
+        cell_size           : (int, int)
+                            pixel-per-cell, height, width of one cell in pixels (default (8,8))
+        block_size          : (int, int)
+                            cell-per-block, height, width of one block in cells (default (2,2))
+        block_stride        : (int, int)
+                            stride step of the block in cells (default (1,1))
+        nbins               : int, 
+                            angle bins in one cell (default 9)
+        useSigned           : boolean, 
+                            True for (0,360)
+                            False for (0,180) (default)
+        useInterpolation    : boolean,
+                            True for using linear-bilinear interpolation voting,
+                            False for naive voting
+        normalizeType       : 'L2' (default), 'L2-hys', 'L1', 'L1-sqrt'
+                            normalization method in blocks
+        ravel               : boolean
+                            True for return flattened array vector (default)
+                            False for return retaining original shape
+        
     Return :
     --------
-    normalized block vector, flattened
-
+        block normalized vector of Histogram of Oriented Gradients
     """
 
     # Section 0. Precompute variables
+    degreebase = 180 if not useSigned else 360
+
     csize_y, csize_x = cell_size
     h, w = image2d.shape
     h_incell, w_incell = h//csize_y, w//csize_x
-    #lazy cropping
-    h, w = h_incell*csize_y, w_incell*csize_x
-    image2d = image2d[:h,:w]
-    degreebase = 180 if not useSigned else 360
-        
-    _cell_mapper = np.arange(h_incell*w_incell).reshape(h_incell, w_incell).repeat(csize_x, axis=1).repeat(csize_y, axis=0)
     
+    #crop image
+    if (h%csize_y != 0) or (w%csize_x != 0):
+        h, w = h_incell*csize_y, w_incell*csize_x
+        image2d = image2d[:h,:w]
+
     # Section 1. gradient image x and y
     gX = filters.conv_filter(image2d,[1,0,-1],[0,1,0])
     gY = filters.conv_filter(image2d,[0,1,0],[1,0,-1])
@@ -56,13 +65,17 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1),
     mag, ang = filters.toPolar(gX, gY, signed=useSigned)
 
     # Section 3. trilinear interpolation voting
+    #build cell mapper
+    _cell_mapper = np.arange(h_incell*w_incell).reshape(h_incell, w_incell).repeat(csize_x, axis=1).repeat(csize_y, axis=0)
+    #bin step size
+    _bin_step = (degreebase/(nbins-1))
+
     if useInterpolation:
         
         magcoef, angcoef = linterp(ang, nbins, useSigned)
-        ang2x = ((nbins-1)*angcoef/degreebase).astype('int')
+        ang2x = (angcoef/_bin_step).astype('int')
 
         _cell_mapper_xtra = np.pad(_cell_mapper, ((csize_y//2, csize_y//2),(csize_x//2, csize_x//2)), 'edge')
-        # print(np.all(_place_to_bin[4:-4,4:-4]==_cell_mapper) #must be True)
         
         _pibx = np.array((
             _cell_mapper_xtra[:h,:w], \
@@ -70,17 +83,15 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1),
             _cell_mapper_xtra[-h:,:w], \
             _cell_mapper_xtra[-h:,-w:]))
 
-        # # !!!important, if you dont want data loss (Python 2.x) -> mag2x = mag2x.astype(long)
         magx = blinterp(magcoef*mag[None,:,:],cell_size)
         binx = ang2x[:,None,:,:]+(_pibx[None,:,:,:]*nbins)
 
     else:
-        _bin_step = (degreebase/(nbins-1))
         angx = ((ang+_bin_step/2)//_bin_step).astype('int')
         _pibx = _cell_mapper
-        binx = angx[None, :,:]+(_pibx[None, :,:]*nbins)
         magx = mag[None, :, :]
-                
+        binx = angx[None, :,:]+(_pibx[None, :,:]*nbins)
+        
     hists = np.bincount(binx.ravel(), magx.ravel(), h_incell*w_incell*nbins)\
                 .reshape((h_incell,w_incell,nbins))
     
@@ -113,11 +124,7 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1),
         divisor = np.abs(np.sum(blockhists.copy(), axis=2)+(1e-7))[:,:,None]
         blockhists /= np.where(divisor!=0, divisor, 1)
         blockhists = np.sqrt(blockhists)
-    #make this default normalize method
-    elif normalizeType=='L2.old':
-        divisor = np.sqrt(np.sum(blockhists.copy()**2, axis=2))[:,:,None]
-        blockhists /= np.where(divisor!=0, divisor, 1)
-    #not normalized, no good. debug purpose only.
+    #not normalized, debug purpose only. just pass other value outside options.
     else:
         pass
         
@@ -130,26 +137,26 @@ def linterp(ang, nbins, signed=False):
     """
     Parameters : 
 	------------
-        ang: numpy 2darray - orientation coordinate
-        nbins: integer - divisor of angle
-        signed: bool - orientation range 
-                        (0,360) if True, 
-                        (0,180) if False (default)
+        ang     : numpy 2darray - orientation coordinate
+        nbins   : integer - divisor of angle
+        signed  : bool - orientation range 
+                True for (0,360) , 
+                False for (0,180) (default)
     Return :
     --------
         tuples of numpy 2darray magnitude and angle
-        [c  ,               (1-c)],
-        [x_2,                 x_1]
+        [c  ,  (1-c)],
+        [x_2,    x_1]
     """
     degreebase = 180 if not signed else 360
     
-    #coefficient
     binStep = degreebase/nbins
     x = ang    
     x_1 = (ang//binStep)*binStep
+    #coefficient
     c = (x-x_1)/binStep
+    # 0 and degreebase is same
     x_2 = np.where(x_1 < degreebase, x_1+binStep, 0)
-    # return np.array([[c*mag, x_2],[(1-c)*mag, x_1]])
     x_1 = np.where(x_1 < degreebase, x_1, 0)
     return np.array([c,(1-c)]), \
             np.array([x_2, x_1])
@@ -158,17 +165,15 @@ def blinterp(mag, cellSize):
     """
     Parameters : 
 	------------
-        mag: numpy 2darray - magnitude weights
-        cellSize: (int,int) - cell size to determine ranges
+        mag         : numpy 2darray - magnitude weights
+        cellSize    : (int,int) - cell size to determine ranges
         
     Return :
     --------
         magnitudes in their respective bilinear position
-        
         (mag_00,mag_01,mag_10,mag_11)
 
-        where :
-        mag = mag_00 + mag_01 + mag_10 + mag_11
+        where : mag = mag_00 + mag_01 + mag_10 + mag_11
     """
     xi = np.tile(np.arange(mag.shape[-1]), (mag.shape[-2],1))
     yj = np.tile(np.arange(mag.shape[-2]), (mag.shape[-1],1)).T
@@ -178,18 +183,11 @@ def blinterp(mag, cellSize):
     x_coef = ((xi+cellSize[0]/2)-xi_i)/cellSize[0]
     y_coef = ((yj+cellSize[1]/2)-yj_j)/cellSize[1]
 
-    _blin_coefs = np.asarray(\
-    [  (1-x_coef)*(1-y_coef),\
-        x_coef*(1-y_coef),\
-        (1-x_coef)*y_coef,\
-        x_coef*y_coef           ])
+    _blin_coefs = np.asarray([
+        (1-x_coef)*(1-y_coef),  \
+        x_coef*(1-y_coef),      \
+        (1-x_coef)*y_coef,      \
+        x_coef*y_coef           \      
+    ])
     
-    """
-    mag.shape = (..., height, width)
-    blincoefs.shape = (4, height, width)
-    desired output = (..., 4, height, width)
-    howto : (..., height, width) -> (..., height*width) ->
-                (..., 4 ,height, width)
-        using 4 to avoid confusion
-    """
     return mag[:, None, :, :]*_blin_coefs
