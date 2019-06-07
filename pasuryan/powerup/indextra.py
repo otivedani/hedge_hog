@@ -1,10 +1,6 @@
-#!/usr/bin/env python2
 """
-in.dex : point out, show
-dex.ter : right, skill
-ex.ter : outer
-
 in.d.ex.tra.py - numpy extension for 2darray loop vectorizer
+
 """
 #Author @otivedani 
 
@@ -46,8 +42,7 @@ def cellsidx(flatidx, pixels_per_cell, cells_per_block=None):
     
     Return : 
     --------
-    
-    
+        
     """
     if(cells_per_block==None):
         cells_per_block = pixels_per_cell
@@ -102,25 +97,5 @@ def convolver(image, cell_size, stride_size=None):
                 shape=(strideshape[0], strideshape[1], cell_size[0], cell_size[1]), \
                 strides=(imgblksrow_stride,blkrow_stride,imgblkscol_stride,blkcol_stride) \
                 )
-    # print(imgblocks.strides)
+    
     return imgblocks
-
-def rowcolidx(row, col):
-    """ 
-    numpyzed 2d-loop
-    
-    Parameters :
-    ------------
-    row : int - row length
-    col : int - col length
-    
-    Return : 
-    --------
-    r_ix, c_ix
-    #(equal as)
-    for r_ix in range(row):
-        for c_ix in range(col):
-            #do something with r_ix and c_ix
-    
-    """
-    return np.repeat(np.arange(row, dtype='int'), col), np.tile(np.arange(col, dtype='int'), row)

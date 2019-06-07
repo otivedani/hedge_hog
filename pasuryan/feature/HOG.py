@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
 """
-    hog.py
+    HOG.py
     
     Histogram of Oriented Gradients 
     in Python numpy

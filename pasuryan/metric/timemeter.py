@@ -1,11 +1,9 @@
-#!/usr/bin/env python2
+"""
+TBA~
+"""
 
 import time
 import gc
-
-"""
-TBA :P
-"""
 
 def timemeter(function, *args, **kwargs):
     #default value
@@ -30,4 +28,4 @@ def timemeter(function, *args, **kwargs):
 
     return result
 
-#to add : decorator "logtimeplz"
+#TODO add : decorator "logtimeplz"
