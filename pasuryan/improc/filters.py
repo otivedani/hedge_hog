@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 filters.py - various image filtering operation
 
@@ -7,33 +7,18 @@ filters.py - various image filtering operation
 
 import numpy as np
 
-# ::
-def sobelX_HC(img):
-    """
-    Parameters : 
-	------------
-        img: numpy 2darray
-    """
-    img2 = np.pad(img,((1,1),(1,1)),'constant', constant_values=((0, 0),(255, 0)))
-    result_h = img2[:,2:] - img2[:,:-2]
-    result_v = result_h[2:] + result_h[1:-1] + result_h[:-2]
-    # result_v[1:-1]
-    return np.clip(result_v,0,255)
+# Section 0: 2d edge convolution 
+def simple_edge_gradients(img):
+    _img_ = np.pad(img, (1,1), 'symmetric')
 
-def sobelY_HC(img):
-    """
-    Parameters : 
-	------------
-        img: numpy 2darray
-    """
-    img2 = np.pad(img,((1,1),(1,1)),'constant', constant_values=((0, 255),(0, 0)))
-    # print(img2)
-    result_h = img2[:,2:] + img2[:,1:-1] + img2[:,:-2]
-    # print(result_h)
-    result_v = result_h[2:] - result_h[:-2]
-    # print(result_v)
-    # print(len(result_v))
-    return np.clip(result_v,0,255)
+    # #[ 1 , 0 ,-1 ]
+    gX = (-_img_[:,:-2] + _img_[:,2:])[1:-1,:]
+    # #[[1,
+    # #  0,
+    # # -1]]
+    gY = (-_img_[:-2,:] + _img_[2:,:])[:,1:-1]
+
+    return gX, gY
 
 # Section 1: numpy-based 2D convolutional filter, improved version from sobelY_HC and sobelX_HC
 def conv_filter(img, h_kernel, v_kernel, clip=False):
@@ -101,17 +86,17 @@ def toPolar(gX, gY, signed=False, dtype='float'):
     _ang = np.degrees(np.arctan2(gY,gX))
 
     mag = np.sqrt((np.square(gX))+(np.square(gY)))
-    ang = np.where(_ang < 0, _ang + _basis, _ang)
+    ori = np.where(_ang < 0, _ang + _basis, _ang)
 
-    return mag.astype(dtype), ang.astype(dtype)
+    return mag.astype(dtype), ori.astype(dtype)
 #-- end of Section 2
 
 # Section 3 : x-position, y-position vector calculation
-def toCart(ang, mag, signed=False, dtype='float'):
+def toCart(ori, mag, signed=False, dtype='float'):
     """
     Parameters : 
 	------------
-        ang: array-like numpy, in degrees
+        ori: array-like numpy, in degrees
         mag: array-like numpy
         signed: if true - change to range(0,360)
                 if false - change to range(0,180)
@@ -123,8 +108,8 @@ def toCart(ang, mag, signed=False, dtype='float'):
 
     _basis = 360 if signed else 180
 
-    x = mag * np.cos(ang*np.pi/_basis)
-    y = mag * np.sin(ang*np.pi/_basis)
+    x = mag * np.cos(ori*np.pi/_basis)
+    y = mag * np.sin(ori*np.pi/_basis)
 
     return x.astype(dtype), y.astype(dtype)
 #-- end of Section 3
