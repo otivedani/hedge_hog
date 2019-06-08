@@ -109,19 +109,19 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1),
 
     if normalizeType=='L2':
         divisor = np.sqrt(np.sum(blockhists.copy()**2, axis=2)+(1e-7)**2)[:,:,None]
-        blockhists /= np.where(divisor!=0, divisor, 1)
+        blockhists /= divisor
     elif normalizeType=='L2-hys':
         divisor = np.sqrt(np.sum(blockhists.copy()**2, axis=2)+(1e-7)**2)[:,:,None]
-        blockhists /= np.where(divisor!=0, divisor, 1)
-        blockhists[np.where(blockhists>0.2)] = 0.2
+        blockhists /= divisor
+        blockhists[blockhists>0.2] = 0.2
         bmax, bmin = np.amax(blockhists, axis=-1), np.amin(blockhists, axis=-1)
         blockhists = (blockhists - bmin[:,:,None])/np.where(bmax==bmin, 1, (bmax - bmin))[:,:,None]
     elif normalizeType=='L1':
         divisor = np.abs(np.sum(blockhists.copy(), axis=2)+(1e-7))[:,:,None]
-        blockhists /= np.where(divisor!=0, divisor, 1)
+        blockhists /= divisor
     elif normalizeType=='L1-sqrt':
         divisor = np.abs(np.sum(blockhists.copy(), axis=2)+(1e-7))[:,:,None]
-        blockhists /= np.where(divisor!=0, divisor, 1)
+        blockhists /= divisor
         blockhists = np.sqrt(blockhists)
     else:
         pass

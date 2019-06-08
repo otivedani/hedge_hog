@@ -8,14 +8,14 @@ import numpy as np
 
 # Section 0: 2d edge convolution 
 def simple_edge_gradients(img):
-    _img_ = np.pad(img, (1,1), 'symmetric')
+    _img_ = np.pad(img, (1,1), 'symmetric').astype(np.float_)
 
     # #[ 1 , 0 ,-1 ]
-    gX = (-_img_[:,:-2] + _img_[:,2:])[1:-1,:]
+    gX = (_img_[:,:-2] - _img_[:,2:])[1:-1,:]
     # #[[1,
     # #  0,
     # # -1]]
-    gY = (-_img_[:-2,:] + _img_[2:,:])[:,1:-1]
+    gY = (_img_[:-2,:] - _img_[2:,:])[:,1:-1]
 
     return gX, gY
 
