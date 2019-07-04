@@ -1,31 +1,60 @@
 import numpy as np
 from pasuryan.feature import hog
 
-from skimage import io, draw, feature
+from skimage import io, draw, feature, transform
 from PIL import Image, ImageDraw
 import matplotlib.pyplot as plt
 
-def hog_visualizer(hog_feature, img_shape, cell_size, nbins, vcell_sz=32):
+def hog_visualizer(hog_feature, img_shape, cell_size, nbins, vcell_sz=32, fit_resize=True):
     
+    #check length
+    if len(hog_feature.shape) > 1:
+        hog_feature = hog_feature.ravel()
+
     #height and weight in cells
     h_incell, w_incell =  (l//s for l,s in zip(img_shape, cell_size))
 
     #make lines according to angles
     lsbank = make_lines(nbins=nbins,frame_size=vcell_sz,degree_base=180)
 
+    #normalize hog feature
+    # hog_min, hog_max = np.amin(hog_feature), np.amax(hog_feature)
+    # hog_feature = (hog_feature - hog_min) / (hog_max - hog_min)
+    # hog_feature[hog_feature < 0.8] = 0.0
+    # hog_feature = np.clip(hog_feature, 0.7, 1)
+    # print(hog_max)
+    # hog_feature = np.ones(hog_feature.size)
+
     #make masks
     hog_masks = make_masks(hog_feature, vcell_sz)\
         *hog_feature[:, None, None]
-
+    hog_masks.shape = (h_incell,w_incell,nbins,vcell_sz,vcell_sz)
+    
+    _opacity = np.sum(hog_masks, axis=(-1,-2,-3))
+    o_min, o_max = np.amin(_opacity), np.amax(_opacity)
+    _opacity = (_opacity - o_min) / (o_max - o_min)
+    # _opacity[_opacity < 0.2] = 0.0
+    _opacity = _opacity**2
+    # _opacity = 1./ (1.+np.exp(-_opacity**10) )
+    # _opacity = np.log(_opacity/(2-_opacity))    
+    # print(np.amax(_opacity))
     #apply masks to lines
-    result = lsbank[None,:,:,:]*hog_masks.reshape(h_incell,w_incell,nbins,vcell_sz,vcell_sz)
+    result = lsbank[None,:,:,:]*hog_masks*_opacity[:,:,None,None,None]
     # print(result.shape)
 
     mantul = np.sum(result, axis=-3)#**(0.4545)
-    mantul = np.clip(mantul, 0, 255)#**(0.4545)
+    # mantul = np.clip(mantul, 0, 255)#**(0.4545)
     # print(np.amax(mantul))
     mantul = np.moveaxis(mantul,2,1).reshape(h_incell*vcell_sz,w_incell*vcell_sz)
+    
+    # m_min, m_max = np.amin(mantul), np.amax(mantul)
+    # mantul = (mantul - m_min) / (m_max - m_min)
+    # mantul = np.clip(mantul, 0, 255)
+
     # print(mantul.shape)
+    if fit_resize:
+        mantul = transform.resize(mantul, img_shape)
+
     return mantul
 
 def make_lines(
