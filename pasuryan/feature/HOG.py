@@ -14,7 +14,7 @@ from ..improc import filters
 from ..powerup import indextra
 
 def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1), 
-    nbins=9, useSigned=False, useInterpolation=True, normalizeType='L2', ravel=True):
+    nbins=9, useSigned=False, useInterpolation=False, normalizeType='L2', ravel=True):
     """
     Parameters : 
 	------------
@@ -48,26 +48,19 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1),
     # Parameter checking
     if len(image2d.shape) is not 2:
         raise ValueError("Image must be in 2-dimension.")
-    
-    BLOCKNORM_F = {
-        'L2': BlockNorm_L2,
-        'L2-hys': BlockNorm_L2Hys,
-        'L1': BlockNorm_L1,
-        'L1-sqrt': BlockNorm_L1sqrt
-    }
-    if normalizeType not in BLOCKNORM_F:
+    if normalizeType not in {'L2', 'L2-hys', 'L1', 'L1-sqrt'}:
         raise ValueError("Norm type not supported.")
 
     ## Section 0. Precompute variables
     degreebase = 180 if not useSigned else 360
 
-    h_cell, w_cell = cell_size
+    csize_y, csize_x = cell_size
     h, w = image2d.shape
-    vert_cells, horz_cells = h//h_cell, w//w_cell
+    h_incell, w_incell = h//csize_y, w//csize_x
     
     # crop image
-    if (h%h_cell != 0) or (w%w_cell != 0):
-        h, w = vert_cells*h_cell, horz_cells*w_cell
+    if (h%csize_y != 0) or (w%csize_x != 0):
+        h, w = h_incell*csize_y, w_incell*csize_x
         image2d = image2d[:h,:w]
 
     ## Section 1. gradient image x and y
@@ -77,6 +70,7 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1),
     mag, ori = filters.toPolar(gX, gY, signed=useSigned)
 
     ## Section 3. trilinear interpolation voting
+    # bin step size
     binStep = degreebase/nbins
 
     if useInterpolation:
@@ -88,33 +82,55 @@ def hog(image2d, cell_size=(8,8), block_size=(2,2), block_stride=(1,1),
         binx = bin_2[:,None,:,:]+(cmap_4[None,:,:,:]*nbins)
 
     else:
-        # build bin position, keep number between (0,nbins)
+        # build bin position
         bin_1 = ((ori+binStep/2)//binStep).astype(np.int_)
+        # max is nbins-1
         bin_1[bin_1 >= nbins] = 0
         
         # build cell mapper
         xi, yj = np.meshgrid(np.arange(w),np.arange(h))
-        cell_mapper = xi//w_cell + (yj//h_cell) * horz_cells
+        cell_mapper = xi//csize_x + (yj//csize_y) * w_incell
         cmap_1 = cell_mapper
 
         magx = mag[None,:,:]
         binx = bin_1[None,:,:]+(cmap_1[None,:,:]*nbins)
         
-    hists = np.bincount(binx.ravel(), magx.ravel(), vert_cells*horz_cells*nbins)
+    hists = np.bincount(binx.ravel(), magx.ravel(), h_incell*w_incell*nbins)\
+                .reshape((h_incell,w_incell,nbins))
     
     ## Section 4. block normalization
-    alt_block_size = block_size[0], block_size[1]*nbins
-    alt_block_stride = block_stride[0], block_stride[1]*nbins
-    alt_blockhists = indextra.convolver(hists.reshape(vert_cells,-1), alt_block_size, alt_block_stride)
-    blockhists = alt_blockhists.reshape(alt_blockhists.shape[0], alt_blockhists.shape[1], -1)
-    
-    out = BLOCKNORM_F[normalizeType](blockhists, eps=1e-7)
+    _bindex = np.arange(hists.size).reshape(hists.shape[0],-1)
+
+    _cpb = block_size[0], block_size[1]*nbins
+    _blockix = indextra.convolver(_bindex, _cpb, (block_stride[0],block_stride[1]*nbins))
+    _blockix = _blockix.reshape(_blockix.shape[0], _blockix.shape[1], _cpb[0]*_cpb[1])
+
+    blockhists = hists.ravel()[_blockix]
+
+    if normalizeType=='L2':
+        divisor = np.sqrt(np.sum(blockhists.copy()**2, axis=2)+(1e-7)**2)[:,:,None]
+        blockhists /= divisor
+    elif normalizeType=='L2-hys':
+        divisor = np.sqrt(np.sum(blockhists.copy()**2, axis=2)+(1e-7)**2)[:,:,None]
+        blockhists /= divisor
+        blockhists[blockhists>0.2] = 0.2
+        bmax, bmin = np.amax(blockhists, axis=-1), np.amin(blockhists, axis=-1)
+        blockhists = (blockhists - bmin[:,:,None])/np.where(bmax==bmin, 1, (bmax - bmin))[:,:,None]
+    elif normalizeType=='L1':
+        divisor = np.abs(np.sum(blockhists.copy(), axis=2)+(1e-7))[:,:,None]
+        blockhists /= divisor
+    elif normalizeType=='L1-sqrt':
+        divisor = np.abs(np.sum(blockhists.copy(), axis=2)+(1e-7))[:,:,None]
+        blockhists /= divisor
+        blockhists = np.sqrt(blockhists)
+    else:
+        pass
     
     ## Last : HOG feature
     if ravel:
-        return out.ravel()
+        return blockhists.ravel()
     else:
-        return out
+        return blockhists
 
 def linterp(ori, nbins, binStep):
     """
@@ -134,11 +150,12 @@ def linterp(ori, nbins, binStep):
     
     x = ori/binStep
     x_1 = np.floor(x)
+    #coefficient
     c = (x-x_1)
     
     coef = np.asarray([c,(1-c)])
     bpos = np.asarray([x_1+1, x_1], dtype=np.int_)
-    # keep number between (0,nbins)
+    # max is nbins-1
     bpos[bpos >= nbins] = 0
 
     return coef, bpos
@@ -157,20 +174,20 @@ def blinterp(img_size, cell_size):
         where : 1 = coef_00 + coef_01 + coef_10 + coef_11
     """
     
-    h_cell, w_cell = cell_size
+    csize_y, csize_x = cell_size
     h, w = img_size
-    vert_cells, horz_cells = h//h_cell, w//w_cell
+    h_incell, w_incell = h//csize_y, w//csize_x
     
     # build coefficients surrounding cells
     xi, yj = np.meshgrid(np.arange(w),np.arange(h))
    
-    x_offset = (xi+(1+w_cell)//2)
-    y_offset = (yj+(1+h_cell)//2)
+    x_offset = (xi+(1+csize_x)//2)
+    y_offset = (yj+(1+csize_y)//2)
     
-    xi_i = (x_offset//w_cell)*w_cell
-    yj_j = (y_offset//h_cell)*h_cell
-    x_coef = (x_offset-xi_i)/w_cell
-    y_coef = (y_offset-yj_j)/h_cell
+    xi_i = (x_offset//csize_x)*csize_x
+    yj_j = (y_offset//csize_y)*csize_y
+    x_coef = (x_offset-xi_i)/csize_x
+    y_coef = (y_offset-yj_j)/csize_y
     
     blin_coefs = np.asarray([
         (1-x_coef)*(1-y_coef),  \
@@ -180,26 +197,14 @@ def blinterp(img_size, cell_size):
     ])
 
     # build cell mapper
-    cell_mapper = xi//w_cell + (yj//h_cell) * horz_cells
-    cell_mapper_around = np.pad(cell_mapper, ((h_cell//2, h_cell//2),(w_cell//2, w_cell//2)), 'edge')
+    cell_mapper = xi//csize_x + (yj//csize_y) * w_incell
+    cell_mapper_around = np.pad(cell_mapper, ((csize_y//2, csize_y//2),(csize_x//2, csize_x//2)), 'edge')
     
     cmapper = np.asarray([
-        cell_mapper_around[:h,:w],  \
+        cell_mapper_around[:h,:w], \
         cell_mapper_around[:h,-w:], \
         cell_mapper_around[-h:,:w], \
         cell_mapper_around[-h:,-w:]
     ])
     
     return blin_coefs, cmapper
-
-# Block Normalization Method
-def BlockNorm_L2(blockhists, eps=1e-7):
-    return blockhists / np.sqrt(np.sum(blockhists**2, axis=-1)+eps**2)[:,:,None]
-def BlockNorm_L2Hys(blockhists, eps=1e-7, clip=0.2):
-    out = BlockNorm_L2(blockhists, eps=eps)
-    out[ out > clip ] = clip
-    return BlockNorm_L2(out, eps=eps)
-def BlockNorm_L1(blockhists, eps=1e-7):
-    return blockhists / (np.sum(np.abs(blockhists), axis=-1)+eps)[:,:,None]
-def BlockNorm_L1sqrt(blockhists, eps=1e-7):
-    return np.sqrt(BlockNorm_L1(blockhists, eps=eps))

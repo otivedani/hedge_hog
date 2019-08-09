@@ -8,19 +8,15 @@ import numpy as np
 
 # Section 0: 2d edge convolution 
 def simple_edge_gradients(img):
-    """
-    Simplifying convolution of simple edge kernel [-1,0,1] & [-1,0,1].T 
+    _img_ = np.pad(img, (1,1), 'symmetric').astype(np.float_)
 
-    Parameters : 
-	------------
-        img     : numpy 2darray
-    Return :
-    --------
-        gX, gY  : edge gradients
-    """
-    gmi = np.pad(img, (1,1), 'edge').astype(np.float_)
-    gX = (-gmi[:,:-2] + gmi[:,2:])[1:-1,:]
-    gY = (-gmi[:-2,:] + gmi[2:,:])[:,1:-1]
+    # #[ 1 , 0 ,-1 ]
+    gX = (_img_[:,:-2] - _img_[:,2:])[1:-1,:]
+    # #[[1,
+    # #  0,
+    # # -1]]
+    gY = (_img_[:-2,:] - _img_[2:,:])[:,1:-1]
+
     return gX, gY
 
 # Section 1: numpy-based 2D convolutional filter, improved version from sobelY_HC and sobelX_HC
@@ -68,27 +64,30 @@ def conv_filter(img, h_kernel, v_kernel, clip=False):
 
 #-- end of Section 1
 
+
 # Section 2 : Magnitude, Angle vector calculation
-def toPolar(gX, gY, signed=False):
+def toPolar(gX, gY, signed=False, dtype='float'):
     """
     Parameters : 
 	------------
-        gX: numpy array - X axis cartesian coordinate
-        gY: numpy array - Y axis cartesian coordinate
-        signed: if True - change to range(0,360)(similar to 'cv2')
-                if False - change to range(0,180)(default)
+        gX: numpy 2darray - cartesian coordinate
+        gY: numpy 2darray - cartesian coordinate
+        signed: if true - change to range(0,360) == similar to 'cv2'
+                if false - change to range(0,180)(default)
     Return :
     --------
-        magnitude, theta: polar coordinate
+    polar coordinate (w,a)
     """
 
     _basis = 360 if signed else 180
 
-    mag = np.sqrt((np.square(gX))+(np.square(gY)))
-    ori = np.degrees(np.arctan2(gY,gX))
-    ori[ ori < 0 ] += _basis
+    # still return (-180,180)
+    _ang = np.degrees(np.arctan2(gY,gX))
 
-    return mag, ori
+    mag = np.sqrt((np.square(gX))+(np.square(gY)))
+    ori = np.where(_ang < 0, _ang + _basis, _ang)
+
+    return mag.astype(dtype), ori.astype(dtype)
 #-- end of Section 2
 
 # Section 3 : x-position, y-position vector calculation

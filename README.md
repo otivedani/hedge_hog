@@ -1,4 +1,5 @@
 # Pasuryan
-Penelitian tentang citra digital wajah.
 
+merupakan ~~skripsi~~ penelitian tentang citra digital dengan subjek wajah.
 
+**Pasuryan** (Krama Inggil)
