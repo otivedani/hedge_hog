@@ -1,11 +1,15 @@
+"""
+Helper to visualize HOG features
+"""
+
 import numpy as np
-from pasuryan.feature import hog
+from ment_hog.feature import hog
 
 from skimage import io, draw, feature
 from PIL import Image, ImageDraw
 import matplotlib.pyplot as plt
 
-def hog_visualizer(hog_feature, img_shape, cell_size, nbins, vcell_sz=32):
+def visualize_hog(hog_feature, img_shape, cell_size, nbins, vcell_sz=32):
     
     #height and weight in cells
     h_incell, w_incell =  (l//s for l,s in zip(img_shape, cell_size))
@@ -21,12 +25,12 @@ def hog_visualizer(hog_feature, img_shape, cell_size, nbins, vcell_sz=32):
     result = lsbank[None,:,:,:]*hog_masks.reshape(h_incell,w_incell,nbins,vcell_sz,vcell_sz)
     # print(result.shape)
 
-    mantul = np.sum(result, axis=-3)#**(0.4545)
-    mantul = np.clip(mantul, 0, 255)#**(0.4545)
-    # print(np.amax(mantul))
-    mantul = np.moveaxis(mantul,2,1).reshape(h_incell*vcell_sz,w_incell*vcell_sz)
-    # print(mantul.shape)
-    return mantul
+    visualized = np.sum(result, axis=-3)#**(0.4545)
+    visualized = np.clip(visualized, 0, 255)#**(0.4545)
+    # print(np.amax(visualized))
+    visualized = np.moveaxis(visualized,2,1).reshape(h_incell*vcell_sz,w_incell*vcell_sz)
+    # print(visualized.shape)
+    return visualized
 
 def make_lines(
                 nbins=9,

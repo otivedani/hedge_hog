@@ -1,3 +1,7 @@
+"""
+paramsync_hog : to sync parameters between other libs (cv2 and sklearn.feature)
+"""
+
 # import skimage
 import cv2
 
@@ -8,10 +12,10 @@ import os, shutil
 class Items(list):
     pass
 
-def items_representer(dumper, data):
+def represent_item(dumper, data):
     return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
 
-yaml.representer.SafeRepresenter.add_representer(Items, items_representer)
+yaml.representer.SafeRepresenter.add_representer(Items, represent_item)
 
 #defaults
 _HOGparam = {
@@ -90,7 +94,6 @@ def get_cv_hogparam(path_to_file='cv2HOG_param.yml'):
         #     print((exc))
     return
     
-
 def get_sk_hogparam():
     global _HOGparam
     skHOGparam = {
