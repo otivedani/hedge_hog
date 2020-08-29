@@ -3,11 +3,11 @@ Helper to visualize HOG features
 """
 
 import numpy as np
-from ment_hog.feature import hog
+from ..feature import hog
 
 from skimage import io, draw, feature
-from PIL import Image, ImageDraw
-import matplotlib.pyplot as plt
+# from PIL import Image, ImageDraw
+# import matplotlib.pyplot as plt
 
 def visualize_hog(hog_feature, img_shape, cell_size, nbins, vcell_sz=32):
     
